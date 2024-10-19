@@ -1,12 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+app.use(cors());
+app.use(express.json()); // For parsing application/json
+// Add multer to handle multipart/form-data
+const upload = require('./config/multerConfig'); // Path to your multer config
 
 // Routes
 app.use('/api/auth', authRoutes);

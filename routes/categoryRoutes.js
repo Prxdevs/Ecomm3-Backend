@@ -1,21 +1,27 @@
+// categoryRoutes.js
 const express = require('express');
+const upload = require('../config/multerConfig'); // Your multer setup
 const {
     createCategory,
-    getCategories,
-    updateCategory,       // Add update function
-    deleteCategory,       // Add delete function
-    getCategoryById       // Add get by ID function
+    getAllCategories,
+    updateCategory,
+    deleteCategory,
+    getCategoryById
 } = require('../controllers/categoryController');
+
 const router = express.Router();
 
-// Create a new category
-router.post('/', createCategory);
+// Create a new category with image upload
+router.post('/', upload.array('image'), createCategory); // Make sure to use upload.array('image')
 
 // Get all categories
-router.get('/', getCategories);
+router.get('/', getAllCategories);
+
+// Get a single category by ID
+// router.get('/:id', getCategoryById);
 
 // Update a category by ID
-router.put('/:id', updateCategory);
+router.put('/:id', upload.array('image'), updateCategory); // Ensure to use upload.array('image')
 
 // Delete a category by ID
 router.delete('/:id', deleteCategory);

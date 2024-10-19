@@ -12,7 +12,7 @@
 //       if (!category) {
 //         return res.status(400).json({ message: 'Invalid category ID' });
 //       }
-  
+
 //       const product = new Product(req.body);
 //       await product.save();
 //       res.status(201).json(product);
@@ -141,24 +141,45 @@
 //     }
 // };
 
-
+// productController.js
 const Category = require('../models/categoryModel');
 const Product = require('../models/productModel');
+const fs = require('fs');
+const path = require('path');
 
 // Create a new product
 exports.createProduct = async (req, res) => {
     try {
+        const { name, category, description, variants, featured } = req.body;
+
         // Check if the category exists
-        const category = await Category.findById(req.body.category);
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
+        // const categoryExists = await Category.findById(category);
+        // if (!categoryExists) {
+        //     return res.status(404).json({ message: 'Category not found' });
+        // }
+
+        const directoryPath = path.join(__dirname, '../category', name);
+        if (!fs.existsSync(directoryPath)) {
+            fs.mkdirSync(directoryPath, { recursive: true });
         }
 
-        // If category exists, create the new product
-        const newProduct = new Product(req.body);
+        // Map the uploaded files to their paths
+        const imagesPath = req.files.map(file => `/product/${name}/${file.filename}`); // Use the same structure as in category
+
+        // Create the new product with images
+        const newProduct = new Product({
+            name,
+            category,
+            description,
+            images: imagesPath, // Save the image paths
+            variants: JSON.parse(variants), // Assuming variants are sent as a JSON string
+            featured: featured === 'true' // Convert to boolean
+        });
+
         await newProduct.save();
         res.status(201).json(newProduct);
     } catch (error) {
+        console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -169,6 +190,7 @@ exports.getAllProducts = async (req, res) => {
         const products = await Product.find().populate('category', 'name');
         res.status(200).json(products);
     } catch (error) {
+        console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -180,6 +202,7 @@ exports.getProductById = async (req, res) => {
         if (!product) return res.status(404).json({ message: 'Product not found' });
         res.status(200).json(product);
     } catch (error) {
+        console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -187,8 +210,7 @@ exports.getProductById = async (req, res) => {
 // Update a product
 exports.updateProduct = async (req, res) => {
     try {
-        // Ensure the incoming request contains the correct structure
-        const { name, category, description, images, variants, featured } = req.body;
+        const { name, category, description, variants, featured } = req.body;
 
         // Check if the category exists
         if (category) {
@@ -198,16 +220,28 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
+        // Prepare the update object
+        const updateData = {
+            name,
+            category,
+            description,
+            variants: JSON.parse(variants), // Assuming variants are sent as a JSON string
+            featured: featured === 'true' // Convert to boolean
+        };
+
+        // Handle image uploads if there are any new files
+        if (req.files && req.files.length > 0) {
+            const imagesPath = req.files.map(file => `/product/${name}/${file.filename}`);
+            updateData.images = imagesPath; // Update with new image paths
+        }
+
         // Update the product with the new data
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id,
-            { name, category, description, images, variants, featured },
-            { new: true, runValidators: true } // runValidators ensures that the variant schema is validated
-        );
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
 
         if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
         res.status(200).json(updatedProduct);
     } catch (error) {
+        console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -219,6 +253,8 @@ exports.deleteProduct = async (req, res) => {
         if (!product) return res.status(404).json({ message: 'Product not found' });
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
+        console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
+

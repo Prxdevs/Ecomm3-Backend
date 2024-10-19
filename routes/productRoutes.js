@@ -1,4 +1,6 @@
+// productRoutes.js
 const express = require('express');
+const upload = require('../config/multerConfig'); // Your multer setup
 const {
     createProduct,
     getAllProducts,
@@ -9,8 +11,8 @@ const {
 
 const router = express.Router();
 
-// Create a new product
-router.post('/', createProduct);
+// Create a new product with image upload
+router.post('/', upload.array('images'), createProduct); // Use upload.array('images')
 
 // Get all products
 router.get('/', getAllProducts);
@@ -19,7 +21,7 @@ router.get('/', getAllProducts);
 router.get('/:id', getProductById);
 
 // Update a product
-router.put('/:id', updateProduct);
+router.put('/:id', upload.array('images'), updateProduct); // Use upload.array('images')
 
 // Delete a product
 router.delete('/:id', deleteProduct);
