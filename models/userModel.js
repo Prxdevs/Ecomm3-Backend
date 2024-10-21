@@ -1,22 +1,3 @@
-// const mongoose = require('mongoose');
-// const bcrypt = require('bcryptjs');
-
-// const userSchema = new mongoose.Schema({
-//   // username: { type: String, required: true, unique: true },
-//   email: { type: String, required: true, unique: true },
-//   password: { type: String, required: true },
-// });
-
-// // Hash password before saving
-// userSchema.pre('save', async function(next) {
-//   if (!this.isModified('password')) return next();
-//   this.password = await bcrypt.hash(this.password, 12);
-//   next();
-// });
-
-// const User = mongoose.model('User', userSchema);
-// module.exports = User;
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); // For hashing passwords
 
@@ -45,6 +26,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  role: {
+    type: Array,
+    default: 'user'
+  },
   Isverified: {
     type: Boolean,
     default: false, // Default value is false
@@ -53,18 +38,18 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true }); // Automatically create createdAt and updatedAt timestamps
 
 // Pre-save hook to hash password before saving the user
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next(); // If password is not modified, move to the next middleware
   }
-  
+
   // Hash the password with a salt round of 10
   this.password = await bcrypt.hash(this.password, 10);
   next(); // Move to the next middleware
 });
 
 // Method to compare entered password with hashed password
-userSchema.methods.matchPassword = async function(enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

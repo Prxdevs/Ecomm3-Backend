@@ -136,3 +136,28 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     // Login successful, return user data (omit password)
     res.status(200).json({ message: "Login successful", user: { email: user.email, isVerified: user.Isverified } });
 });
+
+exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
+    // Extract the email and role from the request body
+    const { email, role } = req.body;
+  
+    // Find the user in the database based on the email
+    const user = await User.findOne({ email });
+  
+    // Check if the user exists
+    if (!user) {
+      // If the user does not exist, return an error response
+      return next(new ErrorHander("User does not exist", 400));
+    }
+  
+    // Update the user's role
+    user.role = role;
+  
+    // Save the updated user document in the database
+    await user.save();
+  
+    // Respond with a success message
+    res.status(200).json({
+      success: true,
+    });
+  });
