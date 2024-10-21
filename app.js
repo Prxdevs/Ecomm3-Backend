@@ -4,13 +4,17 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const upload = require('./config/multerConfig'); // Path to your multer config
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use(cors());
 app.use(express.json()); // For parsing application/json
 // Add multer to handle multipart/form-data
-const upload = require('./config/multerConfig'); // Path to your multer config
 
 // Routes
 app.use('/api/auth', authRoutes);

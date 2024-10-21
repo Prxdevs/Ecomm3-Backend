@@ -153,10 +153,10 @@ exports.createProduct = async (req, res) => {
         const { name, category, description, variants, featured } = req.body;
 
         // Check if the category exists
-        // const categoryExists = await Category.findById(category);
-        // if (!categoryExists) {
-        //     return res.status(404).json({ message: 'Category not found' });
-        // }
+        const categoryExists = await Category.findById(category);
+        if (!categoryExists) {
+            return res.status(404).json({ message: 'Category not found' });
+        }
 
         const directoryPath = path.join(__dirname, '../category', name);
         if (!fs.existsSync(directoryPath)) {
@@ -164,7 +164,7 @@ exports.createProduct = async (req, res) => {
         }
 
         // Map the uploaded files to their paths
-        const imagesPath = req.files.map(file => `/product/${name}/${file.filename}`); // Use the same structure as in category
+        const imagesPath = req.files.map(file => `/products/${name}/${file.filename}`); // Use the same structure as in category
 
         // Create the new product with images
         const newProduct = new Product({
@@ -185,15 +185,47 @@ exports.createProduct = async (req, res) => {
 };
 
 // Get all products
+// exports.getAllProducts = async (req, res) => {
+//     try {
+//         const products = await Product.find().populate('category', 'name');
+//         res.status(200).json(products);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(400).json({ message: error.message });
+//     }
+// };
+
 exports.getAllProducts = async (req, res) => {
+    const { category, color } = req.query; // Changed 'tag' to 'color'
+
     try {
-        const products = await Product.find().populate('category', 'name');
+        let query = {};
+        
+        if (category) {
+            // Find the category by name to get its ID
+            const categoryDoc = await Category.findOne({ name: category });
+            if (categoryDoc) {
+                query.category = categoryDoc._id; // Set the query to filter by category ID
+            } else {
+                return res.status(404).json({ message: 'Category not found' });
+            }
+        }
+
+        // Check if color is provided and filter by colors
+        if (color) {
+            const colorsArray = Array.isArray(color) ? color : [color]; // Ensure colors are in array format
+            query['variants.color'] = { $in: colorsArray }; // Filter by any of the selected colors
+        }
+
+        const products = await Product.find(query).populate('category', 'name'); // Populate category names
         res.status(200).json(products);
     } catch (error) {
         console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
+
+
 
 // Get a single product by ID
 exports.getProductById = async (req, res) => {
