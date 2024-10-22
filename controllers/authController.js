@@ -25,10 +25,10 @@ function generateOTP(lengthChar) {
 }
 
 exports.signup = async (req, res, next) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, name, mobile, dob } = req.body;
     console.log("1");
-    if (!email || !password || !username) {
-        return next(new ErrorHander("Email and password are required", 400));
+    if (!email || !password || !username || !name || !mobile || !dob) {
+        return next(new ErrorHander("All Details are required", 400));
     }
 
     try {
@@ -45,6 +45,9 @@ exports.signup = async (req, res, next) => {
             email,
             password,
             username,
+            name,
+            mobile,
+            dob,
             activationCode,
             activationCodeExpires: Date.now() + 3600000 // 1 hour expiry
         });

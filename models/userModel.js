@@ -7,6 +7,19 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please enter your username'],
     unique: true,
   },
+  mobile: {
+    type: String,
+    required: [true, 'Please enter your mobile number'],
+    unique: true,
+  },
+  name: {
+    type: String,
+    required: [true, 'Please enter your name'],
+  },
+  dob: {
+    type: Date,
+    required: true,
+  },
   email: {
     type: String,
     required: [true, 'Please enter your email'],

@@ -12,7 +12,8 @@ const productSchema = new mongoose.Schema({
     description: { type: String, default: '' },
     images: { type: [String], required: true }, // Array of image URLs
     variants: { type: [variantSchema], required: true }, // Array of variants
-    featured: { type: Boolean, default: false } // Featured field
+    featured: { type: Boolean, default: false }, // Featured field
+    tags: { type: [String], default: [] },
 });
 
 // Middleware to check stock before saving/updating

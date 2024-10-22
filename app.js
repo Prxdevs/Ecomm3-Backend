@@ -6,14 +6,20 @@ const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const upload = require('./config/multerConfig'); // Path to your multer config
 const path = require('path');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const app = express();
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use(cors());
+app.use(cors( {
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
 app.use(express.json()); // For parsing application/json
+app.use(cookieParser()); // For parsing cookies
+
 // Add multer to handle multipart/form-data
 
 // Routes

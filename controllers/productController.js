@@ -1,146 +1,3 @@
-// second level
-
-// const Category = require('../models/categoryModel');
-// const Product = require('../models/productModel'); // Assuming you have a Product model
-
-// // Create a new product
-
-// exports.createProduct = async (req, res) => {
-//     try {
-//       // Check if the category exists
-//       const category = await Category.findById(req.body.categoryId);
-//       if (!category) {
-//         return res.status(400).json({ message: 'Invalid category ID' });
-//       }
-
-//       const product = new Product(req.body);
-//       await product.save();
-//       res.status(201).json(product);
-//     } catch (error) {
-//       res.status(400).json({ message: error.message });
-//     }
-//   };
-
-// // Get all products
-// exports.getAllProducts = async (req, res) => {
-//   try {
-//     const products = await Product.find();
-//     res.status(200).json(products);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// // Get a product by ID
-// exports.getProductById = async (req, res) => {
-//   try {
-//     const product = await Product.findById(req.params.id);
-//     if (!product) return res.status(404).json({ message: 'Product not found' });
-//     res.status(200).json(product);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// // Update a product
-// exports.updateProduct = async (req, res) => {
-//   try {
-//     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-//     if (!product) return res.status(404).json({ message: 'Product not found' });
-//     res.status(200).json(product);
-//   } catch (error) {
-//     res.status(400).json({ message: error.message });
-//   }
-// };
-
-// // Delete a product
-// exports.deleteProduct = async (req, res) => {
-//   try {
-//     const product = await Product.findByIdAndDelete(req.params.id);
-//     if (!product) return res.status(404).json({ message: 'Product not found' });
-//     res.status(200).json({ message: 'Product deleted successfully' });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-// // Get featured products
-// exports.getFeaturedProducts = async (req, res) => {
-//   try {
-//     const products = await Product.find({ featured: true });
-//     res.status(200).json(products);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
-
-// second level
-
-// const Category = require('../models/categoryModel');
-// const Product = require('../models/productModel');
-
-// // Create a new product
-// exports.createProduct = async (req, res) => {
-//     try {
-//         // Check if the category exists
-//         const category = await Category.findById(req.body.category);
-//         if (!category) {
-//             return res.status(404).json({ message: 'Category not found' });
-//         }
-
-//         // If category exists, create the new product
-//         const newProduct = new Product(req.body);
-//         await newProduct.save();
-//         res.status(201).json(newProduct);
-//     } catch (error) {
-//         res.status(400).json({ message: error.message });
-//     }
-// };
-
-// // Get all products
-// exports.getAllProducts = async (req, res) => {
-//     try {
-//         const products = await Product.find().populate('category', 'name');
-//         res.status(200).json(products);
-//     } catch (error) {
-//         res.status(400).json({ message: error.message });
-//     }
-// };
-
-// // Get a single product by ID
-// exports.getProductById = async (req, res) => {
-//     try {
-//         const product = await Product.findById(req.params.id).populate('category', 'name');
-//         if (!product) return res.status(404).json({ message: 'Product not found' });
-//         res.status(200).json(product);
-//     } catch (error) {
-//         res.status(400).json({ message: error.message });
-//     }
-// };
-
-// // Update a product
-// exports.updateProduct = async (req, res) => {
-//     try {
-//         const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-//         if (!product) return res.status(404).json({ message: 'Product not found' });
-//         res.status(200).json(product);
-//     } catch (error) {
-//         res.status(400).json({ message: error.message });
-//     }
-// };
-
-// // Delete a product
-// exports.deleteProduct = async (req, res) => {
-//     try {
-//         const product = await Product.findByIdAndDelete(req.params.id);
-//         if (!product) return res.status(404).json({ message: 'Product not found' });
-//         res.status(200).json({ message: 'Product deleted successfully' });
-//     } catch (error) {
-//         res.status(400).json({ message: error.message });
-//     }
-// };
-
 // productController.js
 const Category = require('../models/categoryModel');
 const Product = require('../models/productModel');
@@ -196,11 +53,12 @@ exports.createProduct = async (req, res) => {
 // };
 
 exports.getAllProducts = async (req, res) => {
-    const { category, color } = req.query; // Changed 'tag' to 'color'
+    const { category, color, tags } = req.query;
 
     try {
         let query = {};
-        
+
+        // Filter by category
         if (category) {
             // Find the category by name to get its ID
             const categoryDoc = await Category.findOne({ name: category });
@@ -211,10 +69,16 @@ exports.getAllProducts = async (req, res) => {
             }
         }
 
-        // Check if color is provided and filter by colors
+        // Filter by color
         if (color) {
             const colorsArray = Array.isArray(color) ? color : [color]; // Ensure colors are in array format
             query['variants.color'] = { $in: colorsArray }; // Filter by any of the selected colors
+        }
+
+        // Filter by tag
+        if (tags) {
+            const tagsArray = Array.isArray(tags) ? tags : [tags]; // Ensure tags are in array format
+            query['tags'] = { $in: tagsArray }; // Filter products that have any of the selected tags
         }
 
         const products = await Product.find(query).populate('category', 'name'); // Populate category names
