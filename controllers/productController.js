@@ -7,8 +7,8 @@ const path = require('path');
 // Create a new product
 exports.createProduct = async (req, res) => {
     try {
-        const { name, category, description, variants, featured } = req.body;
-
+        const { name, category, description, variants, tags, featured } = req.body;
+        console.log('get data from frontend', name, category, description, variants, featured);
         // Check if the category exists
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
@@ -20,18 +20,31 @@ exports.createProduct = async (req, res) => {
             fs.mkdirSync(directoryPath, { recursive: true });
         }
 
+        // const { category } = req.body;
+        // if (!category || !mongoose.Types.ObjectId.isValid(category)) {
+        //     return res.status(400).json({ message: 'Invalid Category ID' });
+        // }
+
+
         // Map the uploaded files to their paths
-        const imagesPath = req.files.map(file => `/products/${name}/${file.filename}`); // Use the same structure as in category
+        // const imagesPath = req.files.map(file => `/products/${name}/${file.filename}`); // Use the same structure as in category
+        let imagesPath = [];
+        if (req.files && req.files.length > 0) {
+            imagesPath = req.files.map(file => `/products/${name}/${file.filename}`);
+        }
 
         // Create the new product with images
         const newProduct = new Product({
             name,
             category,
             description,
+            tags,
             images: imagesPath, // Save the image paths
             variants: JSON.parse(variants), // Assuming variants are sent as a JSON string
             featured: featured === 'true' // Convert to boolean
         });
+
+        console.log('newProduct', newProduct);
 
         await newProduct.save();
         res.status(201).json(newProduct);
@@ -42,15 +55,6 @@ exports.createProduct = async (req, res) => {
 };
 
 // Get all products
-// exports.getAllProducts = async (req, res) => {
-//     try {
-//         const products = await Product.find().populate('category', 'name');
-//         res.status(200).json(products);
-//     } catch (error) {
-//         console.error(error);
-//         res.status(400).json({ message: error.message });
-//     }
-// };
 
 exports.getAllProducts = async (req, res) => {
     const { category, color, tags } = req.query;
@@ -104,9 +108,59 @@ exports.getProductById = async (req, res) => {
 };
 
 // Update a product
+// exports.updateProduct = async (req, res) => {
+//     try {
+//         const { name, category, description, variants, featured, tags, imagesToRemove } = req.body;
+
+//         // Check if the category exists
+//         if (category) {
+//             const categoryExists = await Category.findById(category);
+//             if (!categoryExists) {
+//                 return res.status(404).json({ message: 'Category not found' });
+//             }
+//         }
+
+//         // Prepare the update object
+//         const updateData = {
+//             name,
+//             category,
+//             description,
+//             tags: JSON.parse(tags), // Ensure tags are parsed as an array
+//             variants: JSON.parse(variants),
+//             featured: featured === 'true' // Convert to boolean
+//         };
+
+//         // Get the existing product to update images
+//         const existingProduct = await Product.findById(req.params.id);
+//         if (!existingProduct) return res.status(404).json({ message: 'Product not found' });
+
+//         // Remove specified images if any
+//         if (imagesToRemove) {
+//             const imagesToRemoveArray = JSON.parse(imagesToRemove); // Assuming imagesToRemove is sent as a JSON string
+//             updateData.images = existingProduct.images.filter(image => !imagesToRemoveArray.includes(image)); // Remove specified images
+//         } else {
+//             updateData.images = existingProduct.images; // Keep existing images if no imagesToRemove specified
+//         }
+
+//         // Handle image uploads if there are any new files
+//         if (req.files && req.files.length > 0) {
+//             const newImagesPath = req.files.map(file => `/products/${name}/${file.filename}`);
+//             updateData.images = [...updateData.images, ...newImagesPath]; // Combine existing images (after removal) with new images
+//         }
+
+//         // Update the product with the new data
+//         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+
+//         res.status(200).json(updatedProduct);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(400).json({ message: error.message });
+//     }
+// };
+
 exports.updateProduct = async (req, res) => {
     try {
-        const { name, category, description, variants, featured } = req.body;
+        const { name, category, description, tags, variants, existingImages, removedImages, featured } = req.body;
 
         // Check if the category exists
         if (category) {
@@ -116,25 +170,42 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
-        // Prepare the update object
+        // Parse arrays from JSON strings if necessary
+        const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+        const parsedVariants = typeof variants === 'string' ? JSON.parse(variants) : variants;
+        const parsedExistingImages = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+        const parsedRemovedImages = typeof removedImages === 'string' ? JSON.parse(removedImages) : removedImages;
+
+        // Prepare the update data
         const updateData = {
             name,
             category,
             description,
-            variants: JSON.parse(variants), // Assuming variants are sent as a JSON string
-            featured: featured === 'true' // Convert to boolean
+            tags: parsedTags,
+            variants: parsedVariants,
+            featured: featured === 'true',
         };
 
-        // Handle image uploads if there are any new files
-        if (req.files && req.files.length > 0) {
-            const imagesPath = req.files.map(file => `/product/${name}/${file.filename}`);
-            updateData.images = imagesPath; // Update with new image paths
+        // Retrieve existing product images
+        const existingProduct = await Product.findById(req.params.id);
+        if (!existingProduct) return res.status(404).json({ message: 'Product not found' });
+
+        // Remove specified images if any
+        if (parsedRemovedImages && parsedRemovedImages.length > 0) {
+            updateData.images = existingProduct.images.filter(image => !parsedRemovedImages.includes(image));
+        } else {
+            updateData.images = parsedExistingImages || existingProduct.images;
         }
 
-        // Update the product with the new data
+        // Handle new image uploads
+        if (req.files && req.files.length > 0) {
+            const newImagesPath = req.files.map(file => `/products/${name}/${file.filename}`);
+            updateData.images = [...updateData.images, ...newImagesPath];
+        }
+
+        // Update the product in the database
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
 
-        if (!updatedProduct) return res.status(404).json({ message: 'Product not found' });
         res.status(200).json(updatedProduct);
     } catch (error) {
         console.error(error);
@@ -142,10 +213,12 @@ exports.updateProduct = async (req, res) => {
     }
 };
 
+
 // Delete a product
 exports.deleteProduct = async (req, res) => {
     try {
-        const product = await Product.findByIdAndDelete(req.params.id);
+        Console.log('req.params.id', req.params.id);
+        // const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) return res.status(404).json({ message: 'Product not found' });
         res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {

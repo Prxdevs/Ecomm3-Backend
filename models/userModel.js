@@ -43,6 +43,21 @@ const userSchema = new mongoose.Schema({
     type: Array,
     default: 'user'
   },
+  tokens: [
+    {
+      token: {
+        type: String,
+        // required: true,
+      },
+    },
+  ],
+  loginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lockUntil: {
+    type: Date,
+  },
   Isverified: {
     type: Boolean,
     default: false, // Default value is false

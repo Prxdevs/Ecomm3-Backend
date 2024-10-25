@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const variantSchema = new mongoose.Schema({
     color: { type: String, required: true },
     price: { type: Number, required: true },
-    stock: { type: Number, required: true, min: 0 } // Ensure stock can't be negative
+    stock: { type: Number, min: 0 } // Ensure stock can't be negative
 });
 
 const productSchema = new mongoose.Schema({
