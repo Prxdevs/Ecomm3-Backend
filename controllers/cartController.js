@@ -4,9 +4,8 @@ const Product = require('../models/productModel');
 
 // Add an item to the cart
 exports.addToCart = async (req, res) => {
-    const { product, color, quantity, userId } = req.body;
-    console.log("Adding to cart:", req.body);
-
+    const { product, color, quantity } = req.body;
+    const userId = req.user;
     try {
         // Check if the product exists
         const productData = await Product.findById(product);
@@ -43,8 +42,7 @@ exports.addToCart = async (req, res) => {
 };
 
 exports.getCart = async (req, res) => {
-    const { userId } = req.query; // Get user ID from the request
-    console.log("Fetching cart for user ID:", userId); // Debugging log
+    const userId = req.user; // Get user ID from authenticated user context
 
     try {
         const cart = await Cart.findOne({ user: userId }).populate('items.product');
@@ -75,7 +73,7 @@ exports.getCart = async (req, res) => {
 // Update item quantity in the cart
 exports.updateCartItem = async (req, res) => {
     const { productId, color, quantity } = req.body; // Get data from the request body
-    const userId = req.user._id; // Access user ID from req.user
+    const userId = req.user; // Access user ID from req.user
 
     try {
         const cart = await Cart.findOne({ user: userId });
@@ -105,8 +103,8 @@ exports.updateCartItem = async (req, res) => {
 
 // Remove item from the cart
 exports.removeCartItem = async (req, res) => {
-    const { productId, color, userId } = req.body; // Get data from the request body
-    console.log("Removing item from cart:", req.body); // Debugging log
+    const { productId, color } = req.body; // Get data from the request body
+    const userId = req.user; // Access user ID from req.user
     try {
         const cart = await Cart.findOne({ user: userId });
         if (!cart) {
