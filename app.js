@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 const upload = require('./config/multerConfig'); // Path to your multer config
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -18,7 +19,7 @@ app.use(cors( {
   credentials: true,
 }));
 app.use(express.json()); // For parsing application/json
-app.use(cookieParser()); // For parsing cookies
+app.use(cookieParser()); // For parsing cookiess
 
 // Add multer to handle multipart/form-data
 
@@ -26,6 +27,7 @@ app.use(cookieParser()); // For parsing cookies
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_URI, {

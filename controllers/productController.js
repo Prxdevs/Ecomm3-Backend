@@ -108,9 +108,10 @@ exports.getProductById = async (req, res) => {
 };
 
 // Update a product
+
 // exports.updateProduct = async (req, res) => {
 //     try {
-//         const { name, category, description, variants, featured, tags, imagesToRemove } = req.body;
+//         const { name, category, description, tags, variants, existingImages, removedImages, featured } = req.body;
 
 //         // Check if the category exists
 //         if (category) {
@@ -120,35 +121,40 @@ exports.getProductById = async (req, res) => {
 //             }
 //         }
 
-//         // Prepare the update object
+//         // Parse arrays from JSON strings if necessary
+//         const parsedTags = typeof tags === 'string' ? JSON.parse(tags) : tags;
+//         const parsedVariants = typeof variants === 'string' ? JSON.parse(variants) : variants;
+//         const parsedExistingImages = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+//         const parsedRemovedImages = typeof removedImages === 'string' ? JSON.parse(removedImages) : removedImages;
+
+//         // Prepare the update data
 //         const updateData = {
 //             name,
 //             category,
 //             description,
-//             tags: JSON.parse(tags), // Ensure tags are parsed as an array
-//             variants: JSON.parse(variants),
-//             featured: featured === 'true' // Convert to boolean
+//             tags: parsedTags,
+//             variants: parsedVariants,
+//             featured: featured === 'true',
 //         };
 
-//         // Get the existing product to update images
+//         // Retrieve existing product images
 //         const existingProduct = await Product.findById(req.params.id);
 //         if (!existingProduct) return res.status(404).json({ message: 'Product not found' });
 
 //         // Remove specified images if any
-//         if (imagesToRemove) {
-//             const imagesToRemoveArray = JSON.parse(imagesToRemove); // Assuming imagesToRemove is sent as a JSON string
-//             updateData.images = existingProduct.images.filter(image => !imagesToRemoveArray.includes(image)); // Remove specified images
+//         if (parsedRemovedImages && parsedRemovedImages.length > 0) {
+//             updateData.images = existingProduct.images.filter(image => !parsedRemovedImages.includes(image));
 //         } else {
-//             updateData.images = existingProduct.images; // Keep existing images if no imagesToRemove specified
+//             updateData.images = parsedExistingImages || existingProduct.images;
 //         }
 
-//         // Handle image uploads if there are any new files
+//         // Handle new image uploads
 //         if (req.files && req.files.length > 0) {
 //             const newImagesPath = req.files.map(file => `/products/${name}/${file.filename}`);
-//             updateData.images = [...updateData.images, ...newImagesPath]; // Combine existing images (after removal) with new images
+//             updateData.images = [...updateData.images, ...newImagesPath];
 //         }
 
-//         // Update the product with the new data
+//         // Update the product in the database
 //         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
 
 //         res.status(200).json(updatedProduct);
@@ -193,6 +199,21 @@ exports.updateProduct = async (req, res) => {
         // Remove specified images if any
         if (parsedRemovedImages && parsedRemovedImages.length > 0) {
             updateData.images = existingProduct.images.filter(image => !parsedRemovedImages.includes(image));
+
+            // Delete removed images from the backend folder
+            parsedRemovedImages.forEach((image) => {
+                const imagePath = path.join(__dirname, '../uploads', image); // Update this path
+                console.log(`Checking image: ${imagePath}`);
+                fs.access(imagePath, fs.constants.F_OK, (err) => {
+                    if (!err) {
+                        fs.unlink(imagePath, (unlinkErr) => {
+                            if (unlinkErr) console.error(`Error deleting image: ${unlinkErr.message}`);
+                        });
+                    } else {
+                        console.error(`Image not found: ${imagePath}`);
+                    }
+                });
+            });
         } else {
             updateData.images = parsedExistingImages || existingProduct.images;
         }

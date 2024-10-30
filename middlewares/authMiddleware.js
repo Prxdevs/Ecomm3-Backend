@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user'); // Assuming you have the User model
+const User = require('../models/userModel'); // Assuming you have the User model
 
 // Middleware to verify if the user is authenticated
 exports.isAuthenticated = async (req, res, next) => {
@@ -13,7 +13,7 @@ exports.isAuthenticated = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, 'your_jwt_secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Fetch the user from the database, including their role
     req.user = await User.findById(decoded.id).select('-password'); // Exclude password from user data
 
