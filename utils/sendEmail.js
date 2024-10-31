@@ -6,7 +6,7 @@ const sendEmail = async (options) => {
     service: 'Gmail',
     auth: {
       user: 'prxdevs@gmail.com',
-      pass: 'lbpc etzo nroj qxhj',
+      pass: 'hqvw fomw arug mpkj',
     },
   });
   const mailOptions = {

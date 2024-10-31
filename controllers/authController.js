@@ -42,10 +42,14 @@ exports.signup = async (req, res, next) => {
     }
 
     try {
-        console.log("2");
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return next(new ErrorHander("User with this email already exists", 400));
+            // return next(new ErrorHander("User with this email already exists", 400));
+            return res.status(404).json({ error: 'User with this email already exists' });
+        }
+        const existingMobileUser = await User.findOne({ mobile });
+        if (existingMobileUser) {
+            return res.status(404).json({ error: 'User with this mobile number already exists' });
         }
 
         const activationCode = generateOTP(6);
@@ -88,7 +92,7 @@ exports.signup = async (req, res, next) => {
 // verify
 exports.activateUser = catchAsyncErrors(async (req, res, next) => {
     const { email, activationCode } = req.body;
-
+    console.log("1", email, activationCode);
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -259,6 +263,33 @@ exports.login = async (req, res) => {
         res.status(500).json({ success: false, data: error.message });
     }
 };
+
+// Logout User
+exports.logout = catchAsyncErrors(async (req, res, next) => {
+    res.cookie("token", null, {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Logged Out",
+    });
+});
+
+exports.getSingleUser = async (req, res, next) => {
+    const userId = req.user;
+    const user = await User.findById(userId);
+    try {
+        if (!user) {
+            return res.status(404).json({ success: false, data: 'User not found' });
+        }
+        res.status(200).json({ success: true, data: user });
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        res.status(500).json({ success: false, data: 'Internal Server Error' });
+    }
+}
 
 exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     // Extract the email and role from the request body

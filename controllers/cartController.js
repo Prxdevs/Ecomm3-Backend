@@ -124,3 +124,24 @@ exports.removeCartItem = async (req, res) => {
         res.status(500).json({ message: 'Error removing item from cart', error });
     }
 };
+
+// Calculate total amount in the cart
+exports.getCartTotal = async (req, res) => {
+    try {
+        const userId = req.user;
+        const cart = await Cart.findOne({ user: userId, status: 'active' });
+        if (!cart) {
+            return res.status(404).json({ error: 'Cart not found' });
+        }
+
+        // Calculate total
+        const totalAmount = cart.items.reduce((total, item) => {
+            return total + item.priceAtAdd * item.quantity;
+        }, 0);
+
+        res.json({ total: totalAmount });
+    } catch (error) {
+        console.error('Error calculating cart total:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};

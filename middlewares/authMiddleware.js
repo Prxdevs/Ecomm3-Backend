@@ -8,7 +8,7 @@ exports.isAuthenticated = async (req, res, next) => {
 
   // If no token is found, return an error response
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token provided' });
+    return res.status(401).json({ message: 'Login first to access this resource' });
   }
 
   try {
