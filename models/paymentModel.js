@@ -1,56 +1,58 @@
 const mongoose = require("mongoose");
-const { type } = require("mquery/lib/env");
-// Insert uuidString into MongoDB
 
-const paymentModelSchema = mongoose.Schema({
-    amount: {
-        type: Number
-    },
-    amount_due: {
-        type: Number
-    },
-    amount_paid: {
-        type: Number
-    },
-    attempts: {
-        type: Number
-    },
-    created_at: {
-        type: Number
-    },
-    currency: {
-        type: String,
-    },
-    entity: {
-        type: String,
-    },
-    order_id: {
-        type: String,
-    },
-    notes: {
-        type: mongoose.Schema.Types.Mixed
-    },
-    offer_id: {
-        type: String,
-    },
-    signature: {
-        type: String,
-    },
-    payment_id: {
-        type: String,
-    },
-    payment_method: {
-        type: String,
-    },
-    receipt: {
-        type: String,
-    },
-    status: {
-        type: String,
-    },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-    },
-}, { collection: 'paymentModel' });
+const paymentSchema = new mongoose.Schema({
+  customerid: {
+    type: mongoose.Schema.Types.ObjectId, // Link to the customer/user
+    ref: "Customer", // Assuming you have a Customer model
+    required: true,
+  },
+  entity: {
+    type: String,
+    required: true,
+  },
+  amount: {
+    type: Number,
+    required: true,
+  },
+  amount_paid: {
+    type: Number,
+    default: 0,
+  },
+  amount_due: {
+    type: Number,
+    required: true,
+  },
+  currency: {
+    type: String,
+    required: true,
+  },
+  receipt: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ["created", "attempted", "paid", "failed"],
+    default: "created",
+  },
+  attempts: {
+    type: Number,
+    default: 0,
+  },
+  notes: {
+    type: Map,
+    of: String,
+    default: {},
+  },
+  created_at: {
+    type: Date,
+    required: true,
+  },
+  order_id: {
+    type: String,
+    required: true,
+  },
+}, { timestamps: true });
 
-module.exports = mongoose.model("paymentModel", paymentModelSchema);
+// Export the model
+module.exports = mongoose.model("Payment", paymentSchema);

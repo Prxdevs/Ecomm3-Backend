@@ -174,6 +174,7 @@ exports.login = async (req, res) => {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
                 expiresIn: '5d',
             });
+            console.log("1", token);
             // user.tokens.push({ token: token });
             return res.status(200).cookie('token', token, {
                 httpOnly: true,
@@ -233,6 +234,7 @@ exports.login = async (req, res) => {
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
                 expiresIn: process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
             });
+            console.log("2", token);
             user.loginAttempts = 0;
             user.lockUntil = undefined;
             user.tokens.push({ token: token });

@@ -5,6 +5,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const upload = require('./config/multerConfig'); // Path to your multer config
 const path = require('path');
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/order', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 
 // Connect to MongoDB
