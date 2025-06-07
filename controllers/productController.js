@@ -28,6 +28,16 @@ exports.createProduct = async (req, res) => {
 
         // Map the uploaded files to their paths
         // const imagesPath = req.files.map(file => `/products/${name}/${file.filename}`); // Use the same structure as in category
+        let parsedTags;
+        try {
+            parsedTags = JSON.parse(tags); // Parse the tags if they are sent as a JSON string
+            if (!Array.isArray(parsedTags)) {
+                throw new Error('Tags must be an array');
+            }
+        } catch (error) {
+            return res.status(400).json({ message: `Invalid tags format: ${error.message}` });
+        }
+
         let imagesPath = [];
         if (req.files && req.files.length > 0) {
             imagesPath = req.files.map(file => `/products/${name}/${file.filename}`);
@@ -38,7 +48,7 @@ exports.createProduct = async (req, res) => {
             name,
             category,
             description,
-            tags,
+            tags: parsedTags,
             images: imagesPath, // Save the image paths
             variants: JSON.parse(variants), // Assuming variants are sent as a JSON string
             featured: featured === 'true' // Convert to boolean
@@ -55,8 +65,47 @@ exports.createProduct = async (req, res) => {
 };
 
 // Get all products
+// exports.getAllProducts = async (req, res) => {
+//     const { category, color, tags } = req.query;
 
+//     try {
+//         let query = {};
+
+//         // Filter by category
+//         if (category) {
+//             // Find the category by name to get its ID
+//             const categoryDoc = await Category.findOne({ name: category });
+//             if (categoryDoc) {
+//                 query.category = categoryDoc._id; // Set the query to filter by category ID
+//             } else {
+//                 return res.status(404).json({ message: 'Category not found' });
+//             }
+//         }
+
+//         // Filter by color
+//         if (color) {
+//             const colorsArray = Array.isArray(color) ? color : [color]; // Ensure colors are in array format
+//             query['variants.color'] = { $in: colorsArray }; // Filter by any of the selected colors
+//         }
+
+//         // Filter by tag
+//         if (tags) {
+//             const tagsArray = Array.isArray(tags) ? tags : [tags]; // Ensure tags are in array format
+//             query['tags'] = { $in: tagsArray }; // Filter products that have any of the selected tags
+//         }
+
+//         const products = await Product.find(query).populate('category', 'name'); // Populate category names
+//         res.status(200).json(products);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(400).json({ message: error.message });
+//     }
+// };
 exports.getAllProducts = async (req, res) => {
+    // Default page to 1 and itemsPerPage to 10, but allow overriding via query parameters
+    const page = parseInt(req.query.page || 1);
+    const itemsPerPage = parseInt(req.query.itemsPerPage || 10);
+
     const { category, color, tags } = req.query;
 
     try {
@@ -64,10 +113,9 @@ exports.getAllProducts = async (req, res) => {
 
         // Filter by category
         if (category) {
-            // Find the category by name to get its ID
             const categoryDoc = await Category.findOne({ name: category });
             if (categoryDoc) {
-                query.category = categoryDoc._id; // Set the query to filter by category ID
+                query.category = categoryDoc._id;
             } else {
                 return res.status(404).json({ message: 'Category not found' });
             }
@@ -75,23 +123,39 @@ exports.getAllProducts = async (req, res) => {
 
         // Filter by color
         if (color) {
-            const colorsArray = Array.isArray(color) ? color : [color]; // Ensure colors are in array format
-            query['variants.color'] = { $in: colorsArray }; // Filter by any of the selected colors
+            const colorsArray = Array.isArray(color) ? color : [color];
+            query['variants.color'] = { $in: colorsArray };
         }
 
         // Filter by tag
         if (tags) {
-            const tagsArray = Array.isArray(tags) ? tags : [tags]; // Ensure tags are in array format
-            query['tags'] = { $in: tagsArray }; // Filter products that have any of the selected tags
+            const tagsArray = Array.isArray(tags) ? tags : [tags];
+            query['tags'] = { $in: tagsArray };
         }
 
-        const products = await Product.find(query).populate('category', 'name'); // Populate category names
-        res.status(200).json(products);
+        // Pagination calculation
+        const limit = itemsPerPage;
+        const skip = (page - 1) * limit;
+
+        const totalProducts = await Product.countDocuments(query); // Total number of matching products
+        const products = await Product.find(query)
+            .populate('category', 'name')
+            .skip(skip)
+            .limit(limit);
+
+        // Respond with pagination details and products
+        res.status(200).json({
+            totalProducts,
+            currentPage: page,
+            totalPages: Math.ceil(totalProducts / limit),
+            products,
+        });
     } catch (error) {
         console.error(error);
         res.status(400).json({ message: error.message });
     }
 };
+
 
 
 

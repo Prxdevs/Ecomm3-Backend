@@ -8,11 +8,12 @@ const {
     deleteCategory,
     getCategoryById
 } = require('../controllers/categoryController');
+const { isAuthenticated } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
 // Create a new category with image upload
-router.post('/', upload.array('image'), createCategory); // Make sure to use upload.array('image')
+router.post('/', upload.array('image'), isAuthenticated, createCategory); // Make sure to use upload.array('image')
 
 // Get all categories
 router.get('/', getAllCategories);
